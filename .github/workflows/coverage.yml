@@ -20,7 +20,7 @@ jobs:
         run: cargo install grcov
       - name: Coverage
         env:
-          RUSTFLAGS: "-Zinstrument-coverage"
+          RUSTFLAGS: "-C instrument-coverage"
           LLVM_PROFILE_FILE: "mshrtsr-%p-%m.profraw"
           RUST_TEST_THREADS: 1
         run: >
