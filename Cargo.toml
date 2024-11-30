@@ -1,7 +1,7 @@
 [package]
 name = "mosquitto-jwt-auth"
 description = "Plugin for Mosquitto MQTT broker, which enables authentication and authorisation via JWT over password."
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Christoph Walcher <christoph-wa@gmx.de>"]
 edition = "2018"
 readme = "Readme.md"
@@ -17,12 +17,12 @@ coveralls = { repository = "wiomoc/mosquitto-jwt-auth" }
 crate-type=["dylib"]
 
 [dependencies]
-serde_derive = "1.0.100"
-serde = "1.0.100"
-serde_json = "1.0.73"
-base64 = "0.10.1"
-biscuit = "0.6.0-beta1"
+serde_derive = "1.0.215"
+serde = "1.0.215"
+serde_json = "1.0.133"
+base64 = "0.10.0"
+biscuit = "0.7.0"
 num-bigint = "0.4.6"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libc = "0.2.112"
+libc = "0.2.167"
