@@ -2,18 +2,41 @@
 extern crate libc;
 
 use std::fs;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, ExitStatus, Stdio};
 use std::thread;
 use std::time::Duration;
+
+struct ChildGuard(Child);
+
+impl ChildGuard {
+    fn id(&self) -> u32 {
+        self.0.id()
+    }
+    fn try_wait(&mut self) -> std::io::Result<Option<ExitStatus>> {
+        self.0.try_wait()
+    }
+    fn wait(&mut self) -> std::io::Result<ExitStatus> {
+        self.0.wait()
+    }
+}
+
+impl Drop for ChildGuard {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
 
 #[test]
 #[cfg(target_os = "linux")]
 fn test_valid() {
-    let mut child = Command::new("mosquitto")
-        .args(&["-c", "tests/mosquitto_valid.conf"])
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let mut child = ChildGuard(
+        Command::new("mosquitto")
+            .args(&["-c", "tests/mosquitto_valid.conf"])
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
 
     thread::sleep(Duration::from_secs(3));
 
@@ -39,21 +62,22 @@ fn test_valid() {
                        "-m", "abc"])
                    .output()
                    .unwrap()
-                   .stderr[..], b"Connection error: Connection Refused: not authorised.\n"[..]);
+                   .stderr[..], b"Connection error: Connection Refused: not authorised.\nError: The connection was refused.\n"[..]);
 
     assert!(child.try_wait().unwrap().is_none());
-    child.kill().unwrap();
 }
 
 #[test]
 #[cfg(target_os = "linux")]
 fn test_valid_jwks() {
     fs::copy("tests/jwks.json", "jwks_test.json").unwrap();
-    let mut child = Command::new("mosquitto")
-        .args(&["-c", "tests/mosquitto_valid_jwks.conf"])
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let mut child = ChildGuard(
+        Command::new("mosquitto")
+            .args(&["-c", "tests/mosquitto_valid_jwks.conf"])
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
 
     thread::sleep(Duration::from_secs(3));
 
@@ -67,7 +91,7 @@ fn test_valid_jwks() {
                        "-m", "abc"])
                    .output()
                    .unwrap()
-                   .stderr[..], b"Connection error: Connection Refused: not authorised.\n"[..]);
+                   .stderr[..], b"Connection error: Connection Refused: not authorised.\nError: The connection was refused.\n"[..]);
 
     fs::copy("tests/jwks_with_sym.json", "jwks_test.json").unwrap();
 
@@ -90,18 +114,19 @@ fn test_valid_jwks() {
                    .stderr[..], b""[..]);
 
     assert!(child.try_wait().unwrap().is_none());
-    child.kill().unwrap();
     fs::remove_file("jwks_test.json").unwrap();
 }
 
 #[test]
 #[cfg(target_os = "linux")]
 fn test_invalid_config() {
-    let mut child = Command::new("mosquitto")
-        .args(&["-c", "tests/mosquitto_invalid_alg.conf"])
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let mut child = ChildGuard(
+        Command::new("mosquitto")
+            .args(&["-c", "tests/mosquitto_invalid_alg.conf"])
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
 
     thread::sleep(Duration::from_secs(3));
 
