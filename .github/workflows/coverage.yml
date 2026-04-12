@@ -7,15 +7,13 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: install mosquitto
-        run: sudo apt-get install -y mosquitto mosquitto-clients
+        run: sudo apt-get update && sudo apt-get install -y mosquitto mosquitto-clients
       - name: install rust nightly
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: llvm-tools-preview
-          override: true
       - name: install grcov
         run: cargo install grcov
       - name: Coverage
@@ -27,7 +25,7 @@ jobs:
           cargo build &&
           cargo test &&
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
-      - uses: coverallsapp/github-action@master
+      - uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: lcov.info
+          file: lcov.info
